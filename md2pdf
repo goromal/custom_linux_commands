@@ -34,12 +34,13 @@ usage: md2pdf [options] infile outfile
 
 Convert markdown infile to pdf outfile.
 
-	options:
-	-f | --mainfont (default="Palatino") Set main document font.
-	-s | --sansfont (default="Helvetica") Set document sansfont.
-	-m | --monofont (default="Menlo") Set document monofont.
-	-x | --fontsize (default=12) Set document font size.
-	-v | --version  (default=0.0) Set document displayed version.	
+    options:
+    -f | --mainfont (default="Palatino") Set main document font.
+    -s | --sansfont (default="Helvetica") Set document sansfont.
+    -m | --monofont (default="Menlo") Set document monofont.
+    -x | --fontsize (default=12) Set document font size. Options
+       |                         are 8-12, 14, 17, 20.
+    -v | --version  (default=0.0) Set document displayed version.	
 
 EOF
 }
