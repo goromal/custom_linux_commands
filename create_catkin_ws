@@ -1,0 +1,80 @@
+#!/bin/bash
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: create_catkin_ws
+
+Run this command IN the directory that you wish to be the top level of a new catkin workspace.
+
+EOF
+}
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+	-h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+	POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##############################
+# EXECUTE THE CREATION COMMAND
+##############################
+
+WS_NAME=${PWD##*/}
+
+echo_yellow "Turning $WS_NAME into catkin workspace..."
+
+mkdir -p src
+cp /opt/ros/kinetic/share/catkin/cmake/toplevel.cmake src/CMakeLists.txt
+echo "file(GLOB_RECURSE EXTRA_FILES */*)" >> src/CMakeLists.txt
+echo "add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})" >> src/CMakeLists.txt
+catkin_make
+
+echo_yellow "Creating sourceror file for workspace..."
+
+echo "#!/bin/bash" > sourceror.sh
+echo "" >> sourceror.sh
+echo "s_name='"$WS_NAME"'" >> sourceror.sh
+echo "source devel/setup.bash" >> sourceror.sh
+echo "echo -e \"\e[1m\$s_name workspace sourced\e[0m\"" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "GREEN=\"\[\033[32m\]\"" >> sourceror.sh
+echo "RESET=\"\[\$(tput sgr0)\]\"" >> sourceror.sh
+echo "rosenv=\"\${GREEN}(\$s_name)\"" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "if [ \"\$SOURCED_WS\" == 'TRUE' ]" >> sourceror.sh
+echo "then" >> sourceror.sh
+echo "    echo -e \"\e[36mprevious sourcing overwritten\e[0m\"" >> sourceror.sh
+echo "else" >> sourceror.sh
+echo "    export PS1=\"\${PS1}\${rosenv} \${RESET}\"" >> sourceror.sh
+echo "    export SOURCED_WS='TRUE'" >> sourceror.sh
+echo "fi" >> sourceror.sh
+echo "alias ros_make=\"(cd \`echo \$ROS_PACKAGE_PATH | awk -Fsrc: '{print \$1}'\` && catkin_make)\"" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "# ADD CUSTOM GAZEBO PATHS HERE" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "# ADD OTHER PROJECT ENVIRONMENT VARIABLES HERE" >> sourceror.sh
+
+chmod +x sourceror.sh
+

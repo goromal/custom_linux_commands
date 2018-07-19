@@ -55,7 +55,7 @@ do
 key="$1"
 
 case $key in
-		-h|--help)
+	-h|--help)
     usage
     exit
     ;;
@@ -77,15 +77,15 @@ case $key in
     -x|--fontsize)
     FONTSIZE="$2"
     shift # past argument
-		shift # past value
+	shift # past value
     ;;
-		-v|--version)
+	-v|--version)
     VERSION="$2"
     shift # past argument
-		shift # past value
+	shift # past value
     ;;
     *)    # unknown option
-		POSITIONAL+=("$1") # save it in an array for later
+	POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
     ;;
 esac

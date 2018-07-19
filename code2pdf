@@ -1,0 +1,62 @@
+#!/bin/bash
+
+#########################
+# DEFAULT VARIABLE VALUES
+#########################
+
+RANDNAME="abc001100.ps"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: code2pdf [options] infile outfile
+
+Convert plain text code infile to color-coded pdf outfile.
+
+EOF
+}
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+	-h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+	POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##########################
+# GET NON-OPTION ARGUMENTS
+##########################
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+[[ -z "$1" ]] && { echo "No infile specified!" ; usage ; exit 1; }
+SRCFILE="$1"
+
+[[ -z "$2" ]] && { echo "No outfile specified!" ; usage ; exit 1; }
+PDFNAME="$2"
+
+################################
+# EXECUTE THE CONVERSION COMMAND
+################################
+
+vim "$PWD/$SRCFILE" -c ":hardcopy > $PWD/$RANDNAME" -c ":q" 
+ps2pdf "$PWD/$RANDNAME" "$PWD/$PDFNAME"
+rm "$PWD/$RANDNAME"

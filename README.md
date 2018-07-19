@@ -33,3 +33,36 @@ md2pdf [options] infile outfile
        |                         are 8-12, 14, 17, 20.
     -v | --version  (default=0.0) Set document displayed version.	
 ```
+
+## code2pdf
+
+A command-line tool for converting plain text code files to color-coded pdf files.
+
+```
+usage: code2pdf [options] infile outfile
+```
+
+## create_catkin_ws
+
+Creates a catkin workspace with the useful sourceror.sh file.
+
+```
+usage: create_catkin_ws
+
+Run this command IN the directory that you wish to be the top level of a new catkin workspace.
+```
+
+## echo_[color]
+
+A selection of custom echo commands that will print with the specified color:
+
+```
+echo_black
+echo_blue
+echo_cyan
+echo_green
+echo_purple
+echo_red
+echo_white
+echo_yellow
+```
