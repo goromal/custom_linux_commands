@@ -14,7 +14,7 @@ Clone this repository into wherever you want it to be installed on your machine.
 sudo ./INSTALL.sh
 ```
 
-_**TODO**_: add note about adding to path (unless it does it automatically)
+Ensure that this directory is added to your PATH variable to use these commands.
 
 # Custom Commands
 
