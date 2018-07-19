@@ -1,0 +1,125 @@
+#!/bin/bash
+
+#################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS TEMPLATE
+#################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+TEMPLATE="$DIR/md2pdf_res/template.tex"
+
+#########################
+# DEFAULT VARIABLE VALUES
+#########################
+
+MAINFONT="Palatino"
+SANSFONT="Helvetica"
+MONOFONT="Menlo"
+FONTSIZE=12
+VERSION="0.0"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: md2pdf [options] infile outfile
+
+Convert markdown infile to pdf outfile.
+
+	options:
+	-f | --mainfont (default="Palatino") Set main document font.
+	-s | --sansfont (default="Helvetica") Set document sansfont.
+	-m | --monofont (default="Menlo") Set document monofont.
+	-x | --fontsize (default=12) Set document font size.
+	-v | --version  (default=0.0) Set document displayed version.	
+
+EOF
+}
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+		-h|--help)
+    usage
+    exit
+    ;;
+    -f|--mainfont)
+    MAINFONT="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -s|--sansfont)
+    SANSFONT="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -m|--monofont)
+    MONOFONT="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -x|--fontsize)
+    FONTSIZE="$2"
+    shift # past argument
+		shift # past value
+    ;;
+		-v|--version)
+    VERSION="$2"
+    shift # past argument
+		shift # past value
+    ;;
+    *)    # unknown option
+		POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##########################
+# GET NON-OPTION ARGUMENTS
+##########################
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+[[ -z "$1" ]] && { echo "No infile specified!" ; usage ; exit 1; }
+INFILE="$PWD/$1"
+
+[[ -z "$2" ]] && { echo "No outfile specified!" ; usage ; exit 1; }
+OUTFILE="$PWD/$2"
+
+############################
+# EXECUTE THE PANDOC COMMAND
+############################
+
+pandoc -N --template="$TEMPLATE" --variable mainfont='"'$MAINFONT'"' --variable sansfont='"'$SANSFONT'"' --variable monofont='"'$MONOFONT'"' --variable fontsize="$FONTSIZE"pt --variable version="$VERSION" "$INFILE" --toc -o "$OUTFILE"
+
+#######
+# DEBUG
+#######
+
+# echo 'pandoc -N --template="'$TEMPLATE'" --variable mainfont="'$MAINFONT'" --variable sansfont="'$SANSFONT'" --variable monofont="'$MONOFONT'" --variable fontsize="'$FONTSIZE'"pt --variable version="'$VERSION'" "'$INFILE'" --toc -o "'$OUTFILE'"'
+
+# echo MAIN FONT		   = "${MAINFONT}"
+# echo SANS FONT	     = "${SANSFONT}"
+# echo MONO FONT	     = "${MONOFONT}"
+# echo FONT SIZE       = "${FONTSIZE}"
+# echo VERSION				 = "${VERSION}"
+# echo IN FILE				 = "$1"
+# echo OUT FILE				 = "$2"
+
+
