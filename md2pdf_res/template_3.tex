@@ -1,4 +1,4 @@
-\documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$$if(papersize)$$papersize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{ext$documentclass$}
+\documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$$if(papersize)$$papersize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{extarticle}
 $if(fontfamily)$
 \usepackage{$fontfamily$}
 $else$
@@ -50,32 +50,38 @@ $endif$
 $if(geometry)$
 \usepackage[$for(geometry)$$geometry$$sep$,$endfor$]{geometry}
 $endif$
-\ifxetex
-  \usepackage[setpagesize=false, % page size defined by xetex
-              unicode=false, % unicode breaks when used with xetex
-              xetex]{hyperref}
-\else
-  \usepackage[unicode=true]{hyperref}
-\fi
-\hypersetup{breaklinks=true,
-            bookmarks=true,
-            pdfauthor={$author-meta$},
-            pdftitle={$title-meta$},
-            colorlinks=true,
-            citecolor=$if(citecolor)$$citecolor$$else$blue$endif$,
-            urlcolor=$if(urlcolor)$$urlcolor$$else$blue$endif$,
-            linkcolor=$if(linkcolor)$$linkcolor$$else$magenta$endif$,
-            pdfborder={0 0 0}}
-\urlstyle{same}  % don't use monospace font for urls
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\pagenumbering{arabic}
-\lhead{\itshape $title$}
-\chead{}
-\rhead{\itshape{\nouppercase{\leftmark}}}
-\lfoot{v $version$}
-\cfoot{}
-\rfoot{\thepage}
+%\ifxetex
+%  \usepackage[setpagesize=false, % page size defined by xetex
+%              unicode=false, % unicode breaks when used with xetex
+%              xetex]{hyperref}
+%\else
+%  \usepackage[unicode=true]{hyperref}
+%\fi
+%\hypersetup{breaklinks=true,
+%            bookmarks=false,
+%            pdfauthor={$author-meta$},
+%            pdftitle={$title-meta$},
+%            colorlinks=true,
+%            citecolor=$if(citecolor)$$citecolor$$else$blue$endif$,
+%            urlcolor=$if(urlcolor)$$urlcolor$$else$blue$endif$,
+%            linkcolor=$if(linkcolor)$$linkcolor$$else$magenta$endif$,
+%            pdfborder={0 0 0}}
+        
+\usepackage[hyphenbreaks]{breakurl}
+\usepackage[hyphens]{url}
+\usepackage{xcolor}
+\renewcommand\UrlFont{\color{blue}}
+
+% \urlstyle{same}  % don't use monospace font for urls
+% \usepackage{fancyhdr}
+% \pagestyle{fancy}
+% \pagenumbering{arabic}
+% \lhead{\itshape $title$}
+% \chead{}
+% \rhead{\itshape{\nouppercase{\leftmark}}}
+% \lfoot{v $version$}
+% \cfoot{}
+% \rfoot{\thepage}
 $if(lang)$
 \ifxetex
   \usepackage{polyglossia}
@@ -136,11 +142,12 @@ $endif$
 \setlength{\emergencystretch}{3em}  % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-$if(numbersections)$
-\setcounter{secnumdepth}{5}
-$else$
-\setcounter{secnumdepth}{0}
-$endif$
+% $if(numbersections)$
+% \setcounter{secnumdepth}{5}
+% $else$
+% \setcounter{secnumdepth}{0}
+% $endif$
+\setcounter{secnumdepth}{0} % no section numbers
 $if(verbatim-in-note)$
 \VerbatimFootnotes % allows verbatim text in footnotes
 $endif$
@@ -152,9 +159,9 @@ $if(author)$
 \author{$for(author)$$author$$sep$ \and $endfor$}
 $endif$
 \date{$date$}
-$for(header-includes)$
-$header-includes$
-$endfor$
+% $for(header-includes)$
+% $header-includes$
+% $endfor$
 
 % Redefines (sub)paragraphs to behave more like sections
 \ifx\paragraph\undefined\else
@@ -165,6 +172,12 @@ $endfor$
 \let\oldsubparagraph\subparagraph
 \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
 \fi
+
+% \makeatletter % get rid of section numbering
+% \renewcommand{\@seccntformat}[1]{}
+% \makeatother
+
+\pagenumbering{gobble} % <<<<<< WHEN NOT USING BOOKMARKS
 
 \begin{document}
 $if(title)$
@@ -180,12 +193,12 @@ $for(include-before)$
 $include-before$
 
 $endfor$
-$if(toc)$
-{
-\hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$black$endif$}
-\setcounter{tocdepth}{$toc-depth$}
-\tableofcontents
-}
+% $if(toc)$
+% {
+% \hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$black$endif$}
+% \setcounter{tocdepth}{$toc-depth$}
+% \tableofcontents
+% }
 $endif$
 $if(lot)$
 \listoftables
