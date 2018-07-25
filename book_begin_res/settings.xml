@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<defaults>
+  <!-- default title comes from folder name -->
+  <author>Andrew Torgesen</author>
+  <description>A book compiled by and for Andrew, and for whomever else may be interested.</description>
+</defaults>
