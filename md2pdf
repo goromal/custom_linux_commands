@@ -11,12 +11,12 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-TEMPLATE="$DIR/md2pdf_res/template.tex"
 
 #########################
 # DEFAULT VARIABLE VALUES
 #########################
 
+TEMPLATE=1
 MAINFONT="Palatino"
 SANSFONT="Helvetica"
 MONOFONT="Menlo"
@@ -34,13 +34,19 @@ usage: md2pdf [options] infile outfile
 
 Convert markdown infile to pdf outfile.
 
-    options:
+    Options:
+    -t | --template (default=1) Set the output document template.
+       |                        Options are:
+       |                        (1) Bookmarks [x] Numbered Headings [x]
+       |                        (2) Bookmarks [x] Numbered Headings [ ]
+       |                        (3) Bookmarks [ ] Numbered Headings [x]
+       |                        (4) Bookmarks [ ] Numbered Headings [ ]
     -f | --mainfont (default="Palatino") Set main document font.
     -s | --sansfont (default="Helvetica") Set document sansfont.
     -m | --monofont (default="Menlo") Set document monofont.
     -x | --fontsize (default=12) Set document font size. Options
        |                         are 8-12, 14, 17, 20.
-    -v | --version  (default=0.0) Set document displayed version.	
+    -v | --version  (default=0.0) Set document displayed version.
 
 EOF
 }
@@ -55,9 +61,14 @@ do
 key="$1"
 
 case $key in
-	-h|--help)
+    -h|--help)
     usage
     exit
+    ;;
+    -t|--template)
+    TEMPLATE="$2"
+    shift # past argument
+    shift # past value
     ;;
     -f|--mainfont)
     MAINFONT="$2"
@@ -77,15 +88,15 @@ case $key in
     -x|--fontsize)
     FONTSIZE="$2"
     shift # past argument
-	shift # past value
+    shift # past value
     ;;
-	-v|--version)
+    -v|--version)
     VERSION="$2"
     shift # past argument
-	shift # past value
+    shift # past value
     ;;
     *)    # unknown option
-	POSITIONAL+=("$1") # save it in an array for later
+  POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
     ;;
 esac
@@ -107,7 +118,9 @@ OUTFILE="$PWD/$2"
 # EXECUTE THE PANDOC COMMAND
 ############################
 
-pandoc -N --template="$TEMPLATE" --variable mainfont='"'$MAINFONT'"' --variable sansfont='"'$SANSFONT'"' --variable monofont='"'$MONOFONT'"' --variable fontsize="$FONTSIZE"pt --variable version="$VERSION" "$INFILE" --toc -o "$OUTFILE"
+TEMPLATE_FILE="$DIR/md2pdf_res/template_$TEMPLATE.tex"
+
+pandoc -N --template="$TEMPLATE_FILE" --variable mainfont='"'$MAINFONT'"' --variable sansfont='"'$SANSFONT'"' --variable monofont='"'$MONOFONT'"' --variable fontsize="$FONTSIZE"pt --variable version="$VERSION" "$INFILE" --toc -o "$OUTFILE"
 
 #######
 # DEBUG
@@ -122,5 +135,3 @@ pandoc -N --template="$TEMPLATE" --variable mainfont='"'$MAINFONT'"' --variable 
 # echo VERSION				 = "${VERSION}"
 # echo IN FILE				 = "$1"
 # echo OUT FILE				 = "$2"
-
-
