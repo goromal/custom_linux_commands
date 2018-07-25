@@ -25,13 +25,19 @@ A command-line tool for converting markdown files to pdf files.
 ```
 md2pdf [options] infile outfile
 
-    options:
+    Options:
+    -t | --template (default=1) Set the output document template.
+       |                        Options are:
+       |                        (1) Bookmarks [x] Numbered Headings [x]
+       |                        (2) Bookmarks [x] Numbered Headings [ ]
+       |                        (3) Bookmarks [ ] Numbered Headings [x]
+       |                        (4) Bookmarks [ ] Numbered Headings [ ]
     -f | --mainfont (default="Palatino") Set main document font.
     -s | --sansfont (default="Helvetica") Set document sansfont.
     -m | --monofont (default="Menlo") Set document monofont.
     -x | --fontsize (default=12) Set document font size. Options
        |                         are 8-12, 14, 17, 20.
-    -v | --version  (default=0.0) Set document displayed version.	
+    -v | --version  (default=0.0) Set document displayed version.
 ```
 
 ## code2pdf
