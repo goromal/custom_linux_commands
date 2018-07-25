@@ -1,0 +1,55 @@
+#!/bin/bash
+
+##################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS RESOURCES
+##################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RES_DIR="$DIR/book_begin_res"
+
+##################################
+# CREATE SRC AND BUILD DIRECTORIES
+##################################
+
+if [ -e "$PWD/src" ]
+then
+  echo_blue "Source directory already exists in this directory!"
+else
+  echo_green "Creating Source directory..."
+  mkdir src
+fi
+
+if [ -e "$PWD/build/compiled_book.cls" ]
+then
+  echo_blue "Build resources already exist in this directory!"
+else
+  echo_green "Creating Build directory and inserting resources..."
+  mkdir build
+  cp "$RES_DIR/compiled_book.cls" "$PWD/build/compiled_book.cls"
+fi
+
+###########################
+# CREATE BOOK MANIFEST FILE
+###########################
+
+if [ -e "$PWD/book.xml" ]
+then
+  echo_red "book.xml file found in this directory! Please delete this file if you wish for it to be overwritten."
+else
+  echo_green "Generating manifest file..."
+  python "$RES_DIR/generate_manifest.py" "$RES_DIR" "$PWD"
+fi
+
+##############
+# COMPILE BOOK
+##############
+
+echo_green "Compiling book..."
+cd "$PWD"
+book_compile
