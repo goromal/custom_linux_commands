@@ -1,5 +1,18 @@
 #!/bin/bash
 
+##################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS RESOURCES
+##################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RES_DIR="$DIR/code2pdf_res"
+
 #########################
 # DEFAULT VARIABLE VALUES
 #########################
@@ -57,6 +70,6 @@ PDFNAME="$2"
 # EXECUTE THE CONVERSION COMMAND
 ################################
 
-vim "$PWD/$SRCFILE" -c ":hardcopy > $PWD/$RANDNAME" -c ":q" 
-ps2pdf "$PWD/$RANDNAME" "$PWD/$PDFNAME"
-rm "$PWD/$RANDNAME"
+vim "$PWD/$SRCFILE" -c ":hardcopy > $RES_DIR/$RANDNAME" -c ":q"
+ps2pdf "$RES_DIR/$RANDNAME" "$PWD/$PDFNAME"
+rm "$RES_DIR/$RANDNAME"
