@@ -118,7 +118,8 @@ OUTFILE="$PWD/$2"
 # EXECUTE THE PANDOC COMMAND
 ############################
 
-TEMPLATE_FILE="$DIR/md2pdf_res/template_$TEMPLATE.tex"
+#TEMPLATE_FILE="$DIR/md2pdf_res/template_$TEMPLATE.tex"
+TEMPLATE_FILE="$DIR/md2pdf_res/andrewsNotes_TEMPLATE.tex"
 
 pandoc -N --template="$TEMPLATE_FILE" --variable mainfont='"'$MAINFONT'"' --variable sansfont='"'$SANSFONT'"' --variable monofont='"'$MONOFONT'"' --variable fontsize="$FONTSIZE"pt --variable version="$VERSION" "$INFILE" --toc -o "$OUTFILE"
 

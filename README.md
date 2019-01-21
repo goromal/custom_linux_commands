@@ -6,7 +6,7 @@ Linux/ROS custom commands that are useful to me. All commands meant for and test
 This command library assumes that you already have the following installed on your machine:
 
 - a version of LaTex (like texlive)
-- ROS Kinetic (desktop version)
+- ROS Kinetic/Melodic (desktop version)
 
 Clone this repository into wherever you want it to be installed on your machine. Then, run the installation script to make all custom commands usable:
 
@@ -71,4 +71,14 @@ echo_purple
 echo_red
 echo_white
 echo_yellow
+```
+
+## ldgen
+
+Converts simple markdown essays into a specially formatted pdf.
+
+```
+usage: ldgen filename
+
+Convert markdown filename.md to a specially-formatted pdf essay.
 ```
