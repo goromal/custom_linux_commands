@@ -1,0 +1,47 @@
+\documentclass[]{article}
+
+\usepackage{parskip}
+\usepackage[space]{grffile}
+\usepackage{pdfpages}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{bookmark}
+\hypersetup{colorlinks=true,linkcolor=blue, linktocpage}
+
+\newcommand{\addpdfsection}[1]{
+\pdfbookmark[section]{#1}{#1}
+\includepdf[pages=1-]{#1.pdf}
+}
+
+\newcommand{\addpdfsubsection}[1]{
+\pdfbookmark[subsection]{#1}{#1}
+\includepdf[pages=1-]{#1.pdf}
+}
+
+\begin{document}
+
+\includepdf[pages=1]{TitlePage.pdf}
+
+\addpdfsection{1 Introduction to Optimization}
+\addpdfsection{2 Using MATLAB}
+\addpdfsection{3 Modeling}
+\addpdfsection{4 Unconstrained 1}
+\addpdfsection{5 Unconstrained 2}
+\addpdfsection{6 Unconstrained 3}
+\pdfbookmark[section]{Check This Out}{Check This Out}
+\addpdfsubsection{7 Unconstrained 4}
+\addpdfsection{8 Trust Region Worksheet}
+\addpdfsection{9 Derivatives 1}
+\addpdfsection{10 Derivatives 2}
+\addpdfsection{11 Derivatives 3}
+\addpdfsection{12 Discrete Variables AND Branch and Bound}
+\addpdfsection{13 Discrete Variables AND Simulated Annealing}
+\addpdfsection{14 Discrete Variables AND Classical Genetic Algorithms}
+\addpdfsection{15 Discrete Variables AND Real-Valued Genetic Algorithms}
+\addpdfsection{16 Discrete Variables AND Multiple Objectives and Genetic Algorithms AND Maximin Function}
+\addpdfsection{17 KKT Conditions}
+\addpdfsection{18 SQP Algorithm}
+\addpdfsection{19 Interior Point Algorithm}
+\addpdfsection{20 Robust Design AND Feasibility Robustness}
+\addpdfsection{21 Robust Design AND Sensitivtiy Robustness}
+
+\end{document}

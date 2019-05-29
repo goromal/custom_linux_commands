@@ -1,0 +1,79 @@
+#!/bin/bash
+
+#################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS TEMPLATE
+#################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: ldgen filename
+
+Convert markdown filename.md to a specially-formatted pdf essay.
+
+EOF
+}
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+  POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##########################
+# GET NON-OPTION ARGUMENTS
+##########################
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+[[ -z "$1" ]] && { echo "No filename specified!" ; usage ; exit 1; }
+DOCNAME=$1
+DOCPATH="$PWD/$DOCNAME"
+
+###########################
+# EXECUTE THE LDGEN COMMAND
+###########################
+
+python "$DIR/ldgen_res/parse.py" "$DOCPATH"
+
+mv "$DOCPATH.tex" "$DIR/ldgen_res/$DOCNAME.tex"
+
+ORIG_PATH=$PWD
+
+cd $DIR/ldgen_res
+
+pdflatex "$DOCNAME.tex"
+pdflatex "$DOCNAME.tex" # for good measure
+
+mv "$DOCNAME.pdf" "$ORIG_PATH/$DOCNAME.pdf"
+
+rm "$DOCNAME.tex"
+rm "$DOCNAME.aux"
+rm "$DOCNAME.log"

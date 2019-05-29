@@ -12,3 +12,66 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 RES_DIR="$DIR/book_compile_res"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: book_compile
+
+Run this command at the top level of a directory that has been created by the book_begin command. It will process the contents of src/ and build a book in the build/ folder.
+
+EOF
+}
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+  POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##################
+# COMPILE THE BOOK
+##################
+
+$RES_DIR/parseDirectoryTree.py "$PWD"
+
+cd src
+
+echo_green 'Generating Title Page...'
+
+ldgen TitlePage > /dev/null 2>&1
+
+echo_green 'Generating Book...'
+
+pdflatex Book.tex #> /dev/null 2>&1
+
+mv Book.pdf ../build/Book.pdf
+
+echo_yellow 'Book written to the build/ folder!'
+
+echo_green 'Cleaning up...'
+
+rm Book.aux
+rm Book.log
+rm Book.tex
+rm TitlePage.md
+rm TitlePage.pdf
