@@ -10,3 +10,5 @@ sudo apt-get install -y ghostscript
 # TODO: FIND A BETTER WAY TO DO THIS
 # INSTALL_DIR="${PWD}"
 # echo 'export PATH="$PATH:'$INSTALL_DIR'"' >> ~/.bashrc
+
+cp -r res/texmf/ ~/texmf/
