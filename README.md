@@ -1,5 +1,5 @@
 # Custom Linux Commands
-Linux/ROS custom commands that are useful to me. All commands meant for and tested on Ubuntu 16.04.
+Linux/ROS custom commands that are useful to me. All commands meant for and tested on Ubuntu 16.04 and 18.04.
 
 # Installation
 
