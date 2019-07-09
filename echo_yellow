@@ -1,4 +1,32 @@
 #!/bin/bash
 
+FLAGS='-e'
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+	-n)
+    FLAGS="${FLAGS} -n"
+	shift
+    ;;
+	-e)
+	FLAGS="${FLAGS}"
+	shift
+	;;
+	-en|-ne)
+	FLAGS="${FLAGS} -n"
+	shift
+	;;
+    *)    # unknown option
+	POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
 COFF="\033[0m"
-echo -e "\033[1;33m$@ ${COFF}";
+ECHOSTR="echo ${FLAGS} \"\033[1;33m$@${COFF}\";"
+eval "${ECHOSTR}"

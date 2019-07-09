@@ -67,7 +67,7 @@ mv "$DOCPATH.tex" "$DIR/ldgen_res/$DOCNAME.tex"
 
 ORIG_PATH=$PWD
 
-cd $DIR/ldgen_res
+cd "$DIR/ldgen_res"
 
 pdflatex "$DOCNAME.tex"
 pdflatex "$DOCNAME.tex" # for good measure

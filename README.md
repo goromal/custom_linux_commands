@@ -73,6 +73,32 @@ echo_white
 echo_yellow
 ```
 
+## pb
+
+Print a progress bar in the terminal output, compatible with loops and special colors.
+
+```
+usage: pb [-h | --help] iternum itertot [barsize] [echocom]
+
+Prints a progress bar.
+
+Arguments:
+  iternum: current iteration number
+  itertot: number of total iterations
+  barsize: (Default: 20) size of the progress bar in characters
+  echocom: (Default: echo) special echo command for printing, such as echo_blue
+
+Example Usage:
+  N=0
+  T=20
+  while [ $N -le $T ]; do
+    pb $N $T
+    N=$[$N+1]
+    sleep 1
+  done
+  echo
+```
+
 ## ldgen
 
 Converts simple markdown essays into a specially formatted pdf.

@@ -52,7 +52,7 @@ done
 # COMPILE THE BOOK
 ##################
 
-$RES_DIR/parseDirectoryTree.py "$PWD"
+"$RES_DIR/parseDirectoryTree.py" "$PWD"
 
 cd src
 

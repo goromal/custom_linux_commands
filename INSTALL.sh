@@ -12,3 +12,7 @@ sudo apt-get install -y ghostscript
 # echo 'export PATH="$PATH:'$INSTALL_DIR'"' >> ~/.bashrc
 
 cp -r res/texmf/ ~/texmf/
+
+sudo apt-get install -y python-pip
+
+pip install mistune
