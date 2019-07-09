@@ -12,7 +12,7 @@ Arguments:
   itertot: number of total iterations
   barsize: (Default: 20) size of the progress bar in characters
   echocom: (Default: echo) special echo command for printing, such as echo_blue
-  
+
 Example Usage:
   N=0
   T=20
@@ -67,6 +67,7 @@ ESTR="$ECHOCOM -n '['"
 eval "$ESTR"
 echoCharWithLength $PADCHAR $BARNUM
 echoCharWithLength ' ' $SPCNUM
-ENDSTR="] (${PERCENTAGE}%)\r"
-ESTR="$ECHOCOM -ne '${ENDSTR}'"
+ENDSTR1="] "
+ESTR="$ECHOCOM -n '${ENDSTR1}'"
 eval "$ESTR"
+echo -ne "(${PERCENTAGE}%)\r"

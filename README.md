@@ -73,6 +73,24 @@ echo_white
 echo_yellow
 ```
 
+## maketitle
+
+Render a pleasant-looking title.
+
+```
+usage: maketitle [options] title
+
+Prints out a decorated title.
+
+Options:
+  -h | --help     Print out the help documentation
+  -c | --color    Followed by special echo command for printing, such as
+                  echo_blue
+
+Arguments:
+  title           word or phrase making up the title
+```
+
 ## pb
 
 Print a progress bar in the terminal output, compatible with loops and special colors.
