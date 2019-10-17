@@ -17,11 +17,11 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 #########################
 
 TEMPLATE=1
-MAINFONT="Palatino"
+# MAINFONT="Palatino"
+MAINFONT="Helvetica"
 SANSFONT="Helvetica"
 MONOFONT="Menlo"
 FONTSIZE=12
-VERSION="0.0"
 
 ##############
 # HELP DISPLAY

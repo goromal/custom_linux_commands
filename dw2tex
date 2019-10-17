@@ -1,0 +1,128 @@
+#!/bin/bash
+
+##################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS RESOURCES
+##################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RESDIR="$DIR/dw2tex_res"
+
+#########################
+# DEFAULT VARIABLE VALUES
+#########################
+
+# WEBPAGE="https://wiki-notes.000webhostapp.com/doku.php?id=start"
+# NAME="DWPage"
+DOCTITLE="DOKU WIKI DOCUMENT"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: dw2tex docTitle
+
+Convert a DokuWiki page to tex.
+
+Steps:
+  Make a folder, call it whatever you want (e.g. DOC)
+  Visit a link like https://wiki-notes.000webhostapp.com/doku.php?id=start&do=export_latexport_tex in your browser
+  Download the file to your folder as content.zip (DOC/content.zip)
+  Execute this command inside of DOC
+
+EOF
+}
+
+# usage()
+# {
+# cat << EOF
+# usage: dw2tex [DokuWikiURL] [name]
+#
+# Convert a DokuWiki page to tex.
+#
+# Example:
+#   dw2tex https://wiki-notes.000webhostapp.com/doku.php?id=start document
+#   cd document
+#   lualatex root.tex
+#   lualatex root.tex # if doc contains indexes, references, etc.
+#
+# EOF
+# }
+
+#################
+# PARSE ARGUMENTS
+#################
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+  POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+##########################
+# GET NON-OPTION ARGUMENTS
+##########################
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+if [ -z $1 ]; then echo_yellow "Using default document title..."; else DOCTITLE="$1"; fi
+#
+# if [ -z $2 ]; then echo_yellow "Using default name..."; else NAME="$2"; fi
+
+#########
+# EXECUTE
+#########
+
+# DOCDIR="$PWD/NAME"
+
+# if [ -d "$DOCDIR" ]; then
+#   rm -rf $DOCDIR
+# fi
+# mkdir $DOCDIR && cd $DOCDIR
+
+# https://askubuntu.com/questions/910349/wget-downloads-an-html-instead-of-my-file
+# curl -O -J -L "$WEBPAGE&do=export_latexport_tex" > content.zip ... :'(
+
+if [ ! -f content.zip ]; then
+  echo_red "content.zip file not found! Check the help menu for directions."
+  exit
+fi
+
+echo_yellow "Obtaining necessary files..."
+
+if [ -d content ]; then
+  rm -rf content
+fi
+mkdir content
+unzip content.zip -d content/
+
+cp "$RESDIR/root.tex" .
+
+echo_yellow "Converting from gratuitous book format to article..."
+
+sed -i 's/\\mainmatter//g' content/aaa.tex
+sed -i 's/\\chapter/\\section/g' content/aaa.tex
+sed -i "s/REPLACETHISTITLESTRING/$DOCTITLE/g" root.tex
+
+echo_yellow "Building..."
+
+lualatex root.tex && lualatex root.tex && mv root.pdf "$DOCTITLE.pdf"

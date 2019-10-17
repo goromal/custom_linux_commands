@@ -4,7 +4,10 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{andrewsNotes}[Definition of Andrew's Note Documents]
-\RequirePackage{palatino}
+% \RequirePackage{palatino}
+
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{helvet}
 
 % Load the Base Class
 \LoadClass[10pt]{article}
@@ -23,7 +26,8 @@
 \usepackage{parskip}
 \setlength{\parindent}{0pt}
 
-\newcommand{\notesColor}{Red}
+% \newcommand{\notesColor}{Red}
+\newcommand{\notesColor}{SteelBlue}
 % \newcommand{\notesColor}{Maroon}
 % \newcommand{\notesColor}{RoyalBlue}
 % \newcommand{\notesColor}{NavyBlue}
@@ -50,7 +54,8 @@
 \makeatletter
 \fancypagestyle{andrewspagestyle}{%
   \fancyhf{}% Clear header/footer
-  \fancyfoot[C]{$\nsim$~\textcolor{\notesColor}{\textbf{\thepage}}~$\nsim$}% Page # in middle/centre of footer
+  % \fancyfoot[C]{$\nsim$~\textcolor{\notesColor}{\textbf{\thepage}}~$\nsim$}% Page # in middle/centre of footer
+  \fancyfoot[C]{\textcolor{\notesColor}{\textbf{\thepage}}}% Page # in middle/centre of footer
   \renewcommand{\headrulewidth}{0pt} % no header rule
 }
 \makeatother

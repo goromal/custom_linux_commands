@@ -1,0 +1,82 @@
+\documentclass[10pt]{article}
+
+\usepackage{import}                 % To import an external document.
+\usepackage[english]{babel}          % To help with hyphenation.
+\usepackage{soul}                   % To provide nice hyphenation.
+\usepackage{hyperref}               % To have hyperlinks to internet.
+\usepackage{array}                  % To have better presentation in tables.
+\usepackage{csquotes}               % To display quotes.
+\usepackage{multirow}               % To have rowspan in tables.
+\usepackage{makecell}               % To have colspan in tables.
+\usepackage{tabulary}               % To make tables.
+\usepackage{fontspec}               % To use local system fonts.
+\usepackage{listings}               % To show source code.
+\usepackage[T1]{fontenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage[svgnames]{xcolor}  % https://www.latextemplates.com/svgnames-colors
+\usepackage{titlesec}
+\usepackage[export]{adjustbox}      % To resize images.
+\usepackage{graphicx}               % To import images.
+\usepackage[font={small,it}]{caption}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+\newcommand{\notesColor}{SteelBlue}
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{helvet}
+
+\titleformat{\part}
+{\color{\notesColor}\normalfont\LARGE\bfseries}
+{}{0em}{\color{\notesColor}}[{\titlerule[0.5pt]}]
+
+% \titleformat{\chapter}
+% {\color{\notesColor}\normalfont\Large\bfseries}
+% {}{0.5em}{\color{black}}
+
+\titleformat{\section}
+{\color{\notesColor}\normalfont\Large\bfseries}
+{}{0.5em}{\color{black}}
+
+% \titleformat{\subsection}
+% {\color{\notesColor}\normalfont\large\bfseries}
+% {\thesubsection}{0.5em}{}
+
+\titleformat{\subsubsection}
+{\color{\notesColor}\normalfont\bfseries}
+{\thesubsubsection}{0.5em}{}
+
+\renewcommand{\labelitemi}{\textcolor{\notesColor}{$\bullet$}}
+\renewcommand{\labelitemii}{\textcolor{\notesColor}{$\circ$}}
+\renewcommand{\labelitemiii}{\textcolor{\notesColor}{$\ast$}}
+\renewcommand{\labelitemiv}{\textcolor{\notesColor}{$\bullet$}}
+
+\makeatletter
+\fancypagestyle{andrewspagestyle}{%
+  \fancyhf{}% Clear header/footer
+  % \fancyfoot[C]{$\nsim$~\textcolor{\notesColor}{\textbf{\thepage}}~$\nsim$}% Page # in middle/centre of footer
+  \fancyfoot[C]{\textcolor{\notesColor}{\textbf{\thepage}}}% Page # in middle/centre of footer
+  \renewcommand{\headrulewidth}{0pt} % no header rule
+}
+\makeatother
+\pagestyle{andrewspagestyle}
+
+\graphicspath{ {content/images/} }  % Where the images are
+\lstdefinestyle{c-style}{}          % Define styles for each used source code language
+
+\lstdefinestyle{bash-style}{
+basicstyle=\ttfamily,
+showstringspaces=false,
+commentstyle=\color{red},
+keywordstyle=\color{blue}
+}
+
+\title{REPLACETHISTITLESTRING}
+
+\begin{document}
+\maketitle
+\import{content/}{aaa.tex}
+\end{document}
