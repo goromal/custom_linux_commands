@@ -34,7 +34,7 @@ Convert a DokuWiki page to tex.
 
 Steps:
   Make a folder, call it whatever you want (e.g. DOC)
-  Visit a link like https://wiki-notes.000webhostapp.com/doku.php?id=start&do=export_latexport_tex in your browser
+  Visit a link like [URL]&do=export_latexport_tex in your browser
   Download the file to your folder as content.zip (DOC/content.zip)
   Execute this command inside of DOC
 
@@ -121,6 +121,11 @@ echo_yellow "Converting from gratuitous book format to article..."
 
 sed -i 's/\\mainmatter//g' content/aaa.tex
 sed -i 's/\\chapter/\\section/g' content/aaa.tex
+sed -i 's/\\\$/\$/g' content/aaa.tex
+sed -i 's/\\^/^/g' content/aaa.tex
+sed -i 's/\\_/_/g' content/aaa.tex
+sed -i 's/\\{/{/g' content/aaa.tex
+sed -i 's/\\}/}/g' content/aaa.tex
 sed -i "s/REPLACETHISTITLESTRING/$DOCTITLE/g" root.tex
 
 echo_yellow "Building..."
