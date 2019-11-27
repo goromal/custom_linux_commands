@@ -1,0 +1,39 @@
+#!/bin/bash
+
+##################################################
+# GET DIRECTORY OF THIS SCRIPT TO ACCESS RESOURCES
+##################################################
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: myditaa inputfile
+
+Reads the file inputfile.txt and creates inputfile.svg according to the ditaa diagram syntax.
+This command assumes that you've followed the ditaa installation steps found at https://wiki-notes.000webhostapp.com/doku.php?id=programmingtools.
+You also need java installed...sorry.
+
+EOF
+}
+
+#########
+# EXECUTE
+#########
+
+INPUTFILE="$1"
+
+if [ -z $1 ]; then echo_red "You didn't specify an input file. Exiting..."; usage; exit; fi
+
+java -jar "$DIR/ditaa.jar" --svg -S "$INPUTFILE.txt" "$INPUTFILE.svg"
