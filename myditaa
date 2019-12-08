@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# TODO
+# if the $ symbol is found anywhere in the text file, then interface with annotate_vg command
+# to overlay latex math/text on the ditaa-created diagram--just produce the pdf with no corresponding
+# latex code
+# CHALLENGES:
+# - determine what the width of the rendered figure must be
+# - determine the commanded fractional positions of each bit of text (hopefully you can center text on the commanded point with tikz)...TODO FIRST: investigate cropping the ditaa image (NOT to content, but to get rid of the extra padding NOT commanded by the text file) BEFORE doing any other processing--this will get rid of the uniform padding and then some...
+# - crop the latex document to the content automatically
+#   ^ see https://shkspr.mobi/blog/2013/03/inkscape-cropping-svg-files-on-the-command-line/, also the comment below for determining the rendered figure width! look into options for latex width specs vs the dimension info inkscape gives you...you want one latex letter to approximately take up one ditaa character rendered pixel size...
+
 ##################################################
 # GET DIRECTORY OF THIS SCRIPT TO ACCESS RESOURCES
 ##################################################
@@ -28,6 +38,12 @@ You also need java installed...sorry.
 EOF
 }
 
+##################
+# HELPER FUNCTIONS
+##################
+
+
+
 #########
 # EXECUTE
 #########
@@ -36,4 +52,19 @@ INPUTFILE="$1"
 
 if [ -z $1 ]; then echo_red "You didn't specify an input file. Exiting..."; usage; exit; fi
 
+# Special pre-processing if $ character present
+if grep -Fq "\$" "$INPUTFILE.txt"
+then
+    # Get number of rows and columns for content
+    DOUBLEDOLLAROW=$(egrep -n '\$\$' "$INPUTFILE.txt" | cut -f1 -d:)
+    NUMROWS="$(($DOUBLEDOLLAROW-1))"
+    LONGESTROW=`egrep "^.{$(wc -L < ${INPUTFILE}.txt)}$" "$INPUTFILE.txt"`
+    NUMCOLS=${#LONGESTROW}
+    # echo_yellow "ROWS, COLS: ${NUMROWS} ${NUMCOLS}"
+
+    # Generate lists of row, column, latex_string
+    exit
+fi
+
+# Create the diagram
 java -jar "$DIR/ditaa.jar" --svg -S "$INPUTFILE.txt" "$INPUTFILE.svg"

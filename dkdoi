@@ -1,0 +1,91 @@
+#!/usr/bin/python
+
+import urllib2, sys, requests, re, json, pyperclip
+from bs4 import BeautifulSoup as BS
+from colorama import Fore, Style
+
+help_str = """
+usage: dkdoi LABEL DOI
+
+Copies the DokuWiki page creation content for the specified digital object identifier (DOI) document. LABEL is optional.
+"""
+
+if sys.argv[1] == '-h':
+    print help_str
+    exit()
+
+if len(sys.argv) < 3:
+    print Fore.RED + 'INSUFFICIENT ARGUMENTS...' + Style.RESET_ALL
+    print help_str
+    exit()
+
+LABEL = sys.argv[1]
+DOI = sys.argv[2]
+
+bibtex = 'ERROR'
+title = 'ERROR'
+abstract = 'ERROR'
+
+try:
+    opener = urllib2.build_opener()
+    opener.addheaders = [('Accept', 'text/bibliography; style=bibtex')]
+    r = opener.open('http://dx.doi.org/%s' % DOI)
+    bibtex = r.read()
+    bibtex = bibtex.replace(',',',\n')
+except:
+    print Fore.RED + 'ERROR: unable to extract the bibtex...' + Style.RESET_ALL
+
+try:
+    page = requests.get('http://dx.doi.org/%s' % DOI)
+    soup = BS(page.content, "lxml")
+    for tag in soup.findAll('script'):
+        if '\"abstract\":' in tag.getText():
+            result = re.search('global\.document\.metadata=(.*);',tag.getText())
+            obj = json.loads(result.group(1))
+            try:
+                title = obj['title']
+            except:
+                print Fore.RED + 'ERROR: title field missing from page metadata...' + Style.RESET_ALL
+            try:
+                abstract = obj['abstract']
+            except:
+                print Fore.RED + 'ERROR: abstract field missing from page metadata...' + Style.RESET_ALL
+except:
+    print Fore.RED + 'ERROR: unable to connect correctly to document host page...' + Style.RESET_ALL
+
+print Fore.GREEN + 'DOI METADATA:' + Style.RESET_ALL
+print ''
+print title
+print ''
+print abstract
+print ''
+print bibtex
+print ''
+
+DOKUWIKIPAGE = """====== [{}] {} ======
+
+[[http://dx.doi.org/{}|PAPER]]
+
+===== Abstract =====
+
+**{}**
+
+===== Highlights =====
+
+  * ...
+
+===== Lingering Questions =====
+
+  * ...
+
+===== Citation =====
+
+<code LaTeX>
+{}
+</code>
+""".format(LABEL, title, DOI, abstract, bibtex)
+
+pyperclip.copy(DOKUWIKIPAGE)
+
+print Fore.GREEN + 'DokuWiki page copied to the clipboard!' + Style.RESET_ALL
+
