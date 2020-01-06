@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# TODO
+# see usage()
+# CHALLENGES:
+# - pre-process with Inkscape if it's an svg
+
+
+##############
+# HELP DISPLAY
+##############
+
+usage()
+{
+cat << EOF
+usage: annotate_vg [flags] specfile
+
+The specfile must have the format of
+   +----------------------------------------+
+ 1 | relative/fig/filepath.[svg,pdf]        |
+ 2 | label (e.g. fig:myfig, 0 for no label) |
+ 3 | caption (0 for no caption)             |
+ 4 | x_frac y_frac whatever text            |
+ 5 | x_frac y_frac $or latex math$          |
+ 6 | ...                                    |
+   +----------------------------------------+
+
+Flags:
+
+ -w [WIDTH e.g. 0.5\textwidth]   LaTeX figure width (REQUIRED FOR OTHER OPTIONS)
+ -p   Generate debug .pdf file WITH .tex in pwd
+ -P   Generate debug .pdf file WITHOUT .tex in pwd
+
+With no flags set, just a .tex file will be generated in pwd.
+
+EOF
+}

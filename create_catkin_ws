@@ -54,7 +54,16 @@ echo_yellow "Creating sourceror file for workspace..."
 echo "#!/bin/bash" > sourceror.sh
 echo "" >> sourceror.sh
 echo "s_name='"$WS_NAME"'" >> sourceror.sh
-echo "source devel/setup.bash" >> sourceror.sh
+echo "" >> sourceror.sh
+echo "SOURCE=\"\${BASH_SOURCE[0]}\"" >> sourceror.sh
+echo "while [ -h \"\$SOURCE\" ]; do" >> sourceror.sh
+echo "  DIR=\"\$( cd -P \"\$( dirname \"\$SOURCE\" )\" && pwd )\"" >> sourceror.sh
+echo "  SOURCE=\"\$(readlink \"\$SOURCE\")\"" >> sourceror.sh
+echo "  [[ \$SOURCE != /* ]] && SOURCE=\"\$DIR/\$SOURCE\"" >> sourceror.sh
+echo "done" >> sourceror.sh
+echo "DIR=\"\$( cd -P \"\$( dirname \"\$SOURCE\" )\" && pwd )\"" >> sourceror.sh
+echo "source \"\$DIR/devel/setup.bash\"" >> sourceror.sh
+echo "" >> sourceror.sh
 echo "echo -e \"\e[1m\$s_name workspace sourced\e[0m\"" >> sourceror.sh
 echo "" >> sourceror.sh
 echo "GREEN=\"\[\033[32m\]\"" >> sourceror.sh

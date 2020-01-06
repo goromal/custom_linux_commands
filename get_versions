@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo_green "Python Versions:"
+python -V
+python3 -V
+echo_green "OpenCV Version:"
+pkg-config --modversion opencv
+echo_green "Eigen 3 Version:"
+pkg-config --modversion eigen3
+
+echo_green "NVIDIA Drivers:"
+cat /proc/driver/nvidia/version
+echo_green "CUDA Toolkit version:"
+nvcc -V
