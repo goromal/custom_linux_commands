@@ -44,7 +44,7 @@ WS_NAME=${PWD##*/}
 echo_yellow "Turning $WS_NAME into catkin workspace..."
 
 mkdir -p src
-cp /opt/ros/melodic/share/catkin/cmake/toplevel.cmake src/CMakeLists.txt
+cp "/opt/ros/$ROS_DISTRO/share/catkin/cmake/toplevel.cmake" src/CMakeLists.txt
 echo "file(GLOB_RECURSE EXTRA_FILES */*)" >> src/CMakeLists.txt
 echo "add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})" >> src/CMakeLists.txt
 catkin_make
