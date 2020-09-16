@@ -1,0 +1,98 @@
+#!/bin/bash
+
+usage()
+{
+cat << EOF
+usage: git_status [OPTIONS]
+
+Get a software version snapshot of your code. Prints out recursive git commit 
+information, including submodules, rooted in the current working directory.
+
+OPTIONS:
+
+  -h, --help   | Display this help menu
+  -f, --format | Format output as DokuWiki table
+  -c, --copy   | Copy output to clipboard
+
+EOF
+}
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+formatoutput="FALSE"
+copyoutput="FALSE"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+  do
+  key="$1"
+
+  case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -f|--format)
+    formatoutput="TRUE"
+    shift
+    ;;
+    -c|--copy)
+    copyoutput="TRUE"
+    shift
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+pushd $(mktemp -d) > /dev/null 2>&1
+tempdir=$(pwd)
+tempdirfile="$tempdir/git_status_info"
+popd > /dev/null 2>&1
+
+rootname="$(basename -- $PWD)"
+
+reponame="$rootname"
+repobranch="$(git branch)"
+repocommit="$(git rev-parse --short=7 --verify HEAD)"
+
+if [[ "$formatoutput" == "TRUE" ]]; then
+  echo "^**Repository** ^**Branch** ^**Commit** ^" > "$tempdirfile"
+  echo "|$reponame |$repobranch |$repocommit |" >> "$tempdirfile"
+else
+  echo "$reponame $repobranch $repocommit" > "$tempdirfile"
+fi
+
+# parse output of recursive submodule status using newlines
+while IFS=$'\n' read -r line; do
+  IFS=' ' read -a line_array <<< $line
+  reponame="${line_array[1]}"
+  repobranch="${line_array[2]}"
+  repocommit=$(git rev-parse --short=7 "${line_array[0]}")
+  if [[ "$formatoutput" == "TRUE" ]]; then
+    echo "|$rootname/$reponame |$repobranch |$repocommit |" >> "$tempdirfile"
+  else
+    echo "$rootname/$reponame $repobranch $repocommit" >> "$tempdirfile"
+  fi
+
+done <<< $(git submodule status --recursive)
+
+cat "$tempdirfile"
+
+if [[ "$copyoutput" == "TRUE" ]]; then
+  cat "$tempdirfile" | xclip -selection clipboard
+  echo_green "Copied to clipboard."
+fi
+
+# cleanup
+rm -rf "$tempdir"
