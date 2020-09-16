@@ -7,9 +7,11 @@
 usage()
 {
 cat << EOF
-usage: create_catkin_ws
+usage: create_catkin_ws [-l]
 
-Run this command IN the directory that you wish to be the top level of a new catkin workspace.
+Run this command IN the directory that you wish to be the top level of a new catkin (tools) workspace.
+
+The optional -l flag will invoke a "legacy" catkin_make build system instead of using catkin tools.
 
 EOF
 }
@@ -17,6 +19,8 @@ EOF
 #################
 # PARSE ARGUMENTS
 #################
+
+LEGACY="FALSE"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -27,6 +31,10 @@ case $key in
 	-h|--help)
     usage
     exit
+    ;;
+    -l)
+    LEGACY="TRUE"
+    shift
     ;;
     *)    # unknown option
 	POSITIONAL+=("$1") # save it in an array for later
@@ -44,10 +52,16 @@ WS_NAME=${PWD##*/}
 echo_yellow "Turning $WS_NAME into catkin workspace..."
 
 mkdir -p src
-cp /opt/ros/melodic/share/catkin/cmake/toplevel.cmake src/CMakeLists.txt
-echo "file(GLOB_RECURSE EXTRA_FILES */*)" >> src/CMakeLists.txt
-echo "add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})" >> src/CMakeLists.txt
-catkin_make
+
+if [[ "$LEGACY" == "TRUE" ]]; then
+    cp /opt/ros/melodic/share/catkin/cmake/toplevel.cmake src/CMakeLists.txt
+    echo "file(GLOB_RECURSE EXTRA_FILES */*)" >> src/CMakeLists.txt
+    echo "add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})" >> src/CMakeLists.txt
+    catkin_make
+else
+    catkin config --init --mkdirs --extend /opt/ros/$ROS_DISTRO --merge-devel --cmake-args -DCMAKE_BUILD_TYPE=Release
+    catkin build
+fi
 
 echo_yellow "Creating sourceror file for workspace..."
 
@@ -77,13 +91,38 @@ echo "else" >> sourceror.sh
 echo "    export PS1=\"\${PS1}\${rosenv} \${RESET}\"" >> sourceror.sh
 echo "    export SOURCED_WS='TRUE'" >> sourceror.sh
 echo "fi" >> sourceror.sh
-echo "alias ros_make=\"(cd \`echo \$ROS_PACKAGE_PATH | awk -Fsrc: '{print \$1}'\` && catkin_make)\"" >> sourceror.sh
-echo "" >> sourceror.sh
-echo "# ADD CUSTOM GAZEBO PATHS HERE" >> sourceror.sh
-echo "" >> sourceror.sh
-echo "" >> sourceror.sh
-echo "" >> sourceror.sh
-echo "# ADD OTHER PROJECT ENVIRONMENT VARIABLES HERE" >> sourceror.sh
 
-chmod +x sourceror.sh
-
+if [[ "$LEGACY" == "TRUE" ]]; then
+		echo "" >> sourceror.sh
+		echo "alias ros_make=\"(cd \`echo \$ROS_PACKAGE_PATH | awk -Fsrc: '{print \$1}'\` && catkin_make)\"" >> sourceror.sh
+    echo "" >> sourceror.sh
+    echo "# ADD CUSTOM GAZEBO PATHS HERE" >> sourceror.sh
+    echo "" >> sourceror.sh
+    echo "" >> sourceror.sh
+    echo "" >> sourceror.sh
+    echo "# ADD OTHER PROJECT ENVIRONMENT VARIABLES HERE" >> sourceror.sh
+else
+	  echo "" >> sourceror.sh
+	  echo "alias rosmake=\"catkin build -DCMAKE_EXPORT_COMPILE_COMMANDS=1\"" >> sourceror.sh
+		echo "" >> sourceror.sh
+		echo "rosmake_gencc() {" >> sourceror.sh
+		echo "  echo_yellow \"Generating centralized compile_commands.json in build directory...\"" >> sourceror.sh
+		echo "  cd \`catkin locate --workspace \$(pwd)\`" >> sourceror.sh
+    echo "  concatenated=\"build/compile_commands.json\"" >> sourceror.sh
+    echo "  echo \"[\" > \$concatenated" >> sourceror.sh
+    echo "  first=1" >> sourceror.sh
+    echo "  for d in build/*" >> sourceror.sh
+    echo "  do" >> sourceror.sh
+    echo "    f=\"\$d/compile_commands.json\"" >> sourceror.sh
+    echo "    if test -f \"\$f\"; then" >> sourceror.sh
+    echo "      if [ \$first -eq 0 ]; then" >> sourceror.sh
+    echo "        echo \",\" >> \$concatenated" >> sourceror.sh
+    echo "      fi" >> sourceror.sh
+    echo "      cat \$f | sed '1d;\$d' >> \$concatenated" >> sourceror.sh
+    echo "    fi" >> sourceror.sh
+    echo "    first=0" >> sourceror.sh
+    echo "  done" >> sourceror.sh
+    echo "  echo \"]\" >> \$concatenated" >> sourceror.sh
+    echo "  echo_green \"Done.\"" >> sourceror.sh
+    echo "}" >> sourceror.sh
+fi
