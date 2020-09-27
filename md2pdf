@@ -109,10 +109,12 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 [[ -z "$1" ]] && { echo "No infile specified!" ; usage ; exit 1; }
-INFILE="$PWD/$1"
+
+if [[ ${1::1} == "/" ]]; then INFILE="$1"; else echo_red "UGH"; INFILE="$PWD/$1"; fi
 
 [[ -z "$2" ]] && { echo "No outfile specified!" ; usage ; exit 1; }
-OUTFILE="$PWD/$2"
+
+if [[ ${2::1} == "/" ]]; then OUTFILE="$2"; else OUTFILE="$PWD/$2"; fi
 
 ############################
 # EXECUTE THE PANDOC COMMAND

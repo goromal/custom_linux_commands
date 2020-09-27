@@ -1,0 +1,92 @@
+#!/bin/bash
+
+usage()
+{
+cat << EOF
+usage: git_image git_repo_dir backup_dir
+
+Recursively backup a git repository (and its submodules) to a new, git-less repository.
+Effectively wraps up an arbitrarily complex git repo into a flat-packaged mass of code.
+
+EOF
+}
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)    # unknown option
+  POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+BASE_DIR="$1"
+if [[ "$BASE_DIR" != /* ]]; then
+  BASE_DIR="$PWD/$BASE_DIR"
+fi
+
+DEST_DIR="$2"
+if [[ "$DEST_DIR" != /* ]]; then
+  DEST_DIR="$PWD/$DEST_DIR"
+fi
+
+# Recursive function: copy all git-indexed, non-submodule files and return relative paths to all submodules
+image_repo() {
+    # PATHS NEED TO BE ABSOLUTE
+    local -n _basedirs=$1
+    ms_bdir="$2"
+    ms_ddir="$3"
+    
+    BDIR="${_basedirs[0]}"
+    DDIR=`echo "$BDIR" | sed "s#${ms_bdir}#${ms_ddir}#"`
+
+    echo_green "${BDIR}"
+
+    # create destination dir if it doesn't exist
+    mkdir -p "${DDIR}"
+
+    # Get list of all non-submodule indexed files from base dir using symmetric difference
+    pushd "${BDIR}" > /dev/null 2>&1
+    IDXFLIST=`sort <(git ls-files) <(git config --file .gitmodules --get-regexp path | awk '{ print $2 }') | uniq -u`
+
+    # Copy files and structures to destination dir
+    for idxfile in $(echo $IDXFLIST) ; do
+        fromfile="$BDIR/$idxfile"
+        destfile="$DDIR/$idxfile"
+        destfdir=$(dirname "$destfile")
+        mkdir -p "$destfdir"
+        cp -av "$fromfile" "$destfile" > /dev/null 2>&1
+    done
+
+    # remove base dir and reconstruct to avoid index gaps
+    unset _basedirs[0]
+    new_basedirs=()
+    for i in "${_basedirs[@]}"; do
+        new_basedirs+=( "$i" )
+    done
+    _basedirs=("${new_basedirs[@]}")
+
+    # add all submodules to base dir list
+    for sbmdl in $(git config --file .gitmodules --get-regexp path | awk '{ print $2 }') ; do
+        _basedirs+=("${PWD}/$sbmdl")
+    done
+    popd > /dev/null 2>&1
+}
+
+MS_BASEDIR="${BASE_DIR}"
+BASEDIRS=("${MS_BASEDIR}")
+MS_DESTDIR="${DEST_DIR}"
+
+while [ ${#BASEDIRS[@]} -ne 0 ] ; do
+    image_repo BASEDIRS "${MS_BASEDIR}" "${MS_DESTDIR}"
+done

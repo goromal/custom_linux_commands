@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# https://github.com/ytdl-org/youtube-dl
+
+usage()
+{
+cat << EOF
+usage: getvideo [OPTIONS] videolink
+
+Download online videos from the command line. Formats are .mp4 / .mp3.
+
+OPTIONS:
+
+  -h, --help      | Display this help menu
+  -u, --upgrade   | Upgrade back-end downloader software (youtube-dl)
+  -------------------------------------------------------------------------
+  -o, --output    | SPACELESS output filename (do NOT include extension)
+  -------------------------------------------------------------------------
+  -a, --audio     | Extract audio only
+  -------------------------------------------------------------------------
+  -t0, --time0    | INITIAL time: [HH:]MM:SS[.0]
+  -tf, --timef    | FINAL time: [HH:]MM:SS[.0]
+  -tt, --times    | INITIAL and FINAL times: [HH:]MM:SS[.0] [HH:]MM:SS[.0]
+
+EOF
+}
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RESDIR="$DIR/getvideo_res"
+CALCRESDIR="$DIR/calc_res"
+
+upgrade()
+{
+echo_yellow "Installing/upgrading youtube-dl..."
+curl -L https://yt-dl.org/downloads/latest/youtube-dl -o "$RESDIR/youtube-dl"
+chmod a+rx "$RESDIR/youtube-dl"
+YOUTUBEDLVERS=`"$RESDIR/youtube-dl" --version`
+echo_green "Upgraded to version $YOUTUBEDLVERS."
+}
+
+filename="video"
+fileext="mp4"
+OUTPUT_FLAG="-o video.%(ext)s"
+FORMAT_FLAGS="--format mp4"
+TRIMSTR_S=""
+TRIMSTR_D=""
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+  -h|--help)
+  usage
+  exit
+  ;;
+  -u|--upgrade)
+  upgrade
+  exit
+  ;;
+  -a|--audio)
+  FORMAT_FLAGS="--extract-audio --audio-format mp3"
+  fileext="mp3"
+  shift
+  ;;
+  -o|--output)
+  shift
+  filename="$1"
+  OUTPUT_FLAG="-o $filename.%(ext)s"
+  shift
+  ;;
+  -t0|--time0)
+  shift
+  STARTTIMESTR=`"$CALCRESDIR/ffmpeg_tools.py" fix-time-format $1`
+  TRIMSTR_S="-ss $STARTTIMESTR"
+  shift
+  ;;
+  -tf|--timef)
+  shift
+  TRIMSTR_S="-ss 00:00:00.0"
+  DURATIONTIMESTR=`"$CALCRESDIR/ffmpeg_tools.py" fix-time-format $1`
+  TRIMSTR_D="-t $DURATIONTIMESTR"
+  shift
+  ;;
+  -tt|--times)
+  shift
+  STARTTIMESTR=`"$CALCRESDIR/ffmpeg_tools.py" fix-time-format $1`
+  TRIMSTR_S="-ss $STARTTIMESTR"
+  DURATIONTIMESTR=`"$CALCRESDIR/ffmpeg_tools.py" duration-from-endpoints $1 $2`
+  TRIMSTR_D="-t $DURATIONTIMESTR"
+  shift
+  shift
+  ;;
+  *)    
+  POSITIONAL+=("$1") 
+  shift 
+  ;;
+esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+if [ ! -f "$RESDIR/youtube-dl" ]; then
+  echo_red "ERROR: no youtube-dl executable found! Please run 'getvideo --upgrade'."
+  exit
+fi
+
+VIDEOLINK=$1
+
+if [ -z "$VIDEOLINK" ]; then 
+  echo_red "ERROR: no video link specified. Exiting..."
+  exit
+fi
+
+SUCCESS="FALSE"
+echo_yellow "Downloading content..."
+"$RESDIR/youtube-dl" $FORMAT_FLAGS $OUTPUT_FLAG $VIDEOLINK && SUCCESS="TRUE"
+
+if [ ! -z "$TRIMSTR_S" ] || [ ! -z "$TRIMSTR_D" ]; then
+  echo_yellow "Trimming content..."
+  mv "$filename.$fileext" "${filename}_UNTRIMMED.$fileext"
+  SUCCESS="FALSE"
+  # https://www.arj.no/2018/05/18/trimvideo/
+  ffmpeg -i "${filename}_UNTRIMMED.$fileext" $TRIMSTR_S $TRIMSTR_D -c copy "$filename.$fileext" > /dev/null 2>&1 && SUCCESS="TRUE"
+  rm "${filename}_UNTRIMMED.$fileext"
+fi
+
+if [[ "$SUCCESS" == "TRUE" ]]; then
+  echo_green "Done."
+else
+  echo_red "Oops. Looks like something went wrong."
+fi

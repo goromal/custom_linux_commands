@@ -1,0 +1,113 @@
+#!/bin/bash
+
+usage()
+{
+cat << EOF
+usage: songsplit [OPTIONS] songfile.mp3
+
+Use spleeter to (attempt to) isolate vocals and accompaniment from a song.
+Will generate two files in the same location as songfile.mp3:
+  - songfile_VOCALS.mp3
+  - songfile_ACCOMP.mp3
+
+OPTIONS:
+
+  -h, --help   | Display this help menu
+  -t, --times  | Set INITIAL TIME and DURATION with format MM SS MM SS
+               | (must be that exact format, with spaces)
+
+EOF
+}
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RESDIR="$DIR/songsplit_res"
+
+TRIMTIME="FALSE"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+  do
+  key="$1"
+
+  case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -t|--times)
+    TRIMTIME="TRUE"
+    shift
+    M0="$1"
+    shift
+    S0="$1"
+    shift
+    MD="$1"
+    shift
+    SD="$1"
+    shift
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+if [ -z $(which spleeter) ]; then
+  echo_red "spleeter not found on system! Install with instructions below:"
+  cat << EOF
+sudo apt install ffmpeg awscli
+pip3 --version # make sure >= 19.1; if not, pip3 install --upgrade pip
+pip3 install spleeter
+EOF
+  echo_red "The first time this command is run, it will take longer than normal."
+  exit
+fi
+
+# Make sure that (full-pathed) songfile.mp3 exists
+SONGFILE="$1"
+if [[ "$SONGFILE" != /* ]]; then
+  SONGFILE="$PWD/$SONGFILE"
+fi
+[ ! -f "$SONGFILE" ] && echo_red "ERROR: specified song file doesn't exist! Exiting..." && exit
+fullfilename=$(basename -- "$SONGFILE")
+songname="${fullfilename%.*}"
+
+# Specify destination directory as the one where songfile.mp3 is, then navigate to res dir
+DESTDIR="$(dirname "$SONGFILE")"
+ACCOMPFILE="$DESTDIR/${songname}_ACCOMP.mp3"
+VOCALSFILE="$DESTDIR/${songname}_VOCALS.mp3"
+[ -f "$ACCOMPFILE" ] && rm "$ACCOMPFILE"
+[ -f "$VOCALSFILE" ] && rm "$VOCALSFILE"
+cd "$RESDIR"
+[ -f trimmed.mp3 ] && rm trimmed.mp3
+[ -d output ] && rm -rf output
+
+# Trim songfile if specified
+SPLITME="$SONGFILE"
+OUTPUTCHILD="$songname"
+if [[ $TRIMTIME == "TRUE" ]]; then
+  echo_yellow "Trimming audio clip..."
+  ffmpeg -ss 00:${M0}:${S0}.0 -i "$SONGFILE" -c copy -t 00:${MD}:${SD}.0 trimmed.mp3 > /dev/null 2>&1
+  SPLITME="trimmed.mp3"
+  OUTPUTCHILD="trimmed"
+fi
+
+# Split!
+echo_yellow "Splitting..."
+(spleeter separate -i "$SPLITME" -o output > /dev/null 2>&1 && echo_green "SUCCESS!" && \
+echo_yellow "Converting and transferring..." && \
+ffmpeg -i "output/$OUTPUTCHILD/accompaniment.wav" "$ACCOMPFILE" > /dev/null 2>&1 && \
+ffmpeg -i "output/$OUTPUTCHILD/vocals.wav" "$VOCALSFILE" > /dev/null 2>&1 && echo_green "DONE.") || echo_red "FAILED"
+
+# Cleanup
+[ -f trimmed.mp3 ] && rm trimmed.mp3
+[ -d output ] && rm -rf output

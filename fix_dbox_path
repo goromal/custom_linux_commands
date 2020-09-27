@@ -1,0 +1,6 @@
+#!/bin/bash
+
+CURPATH="$(pwd)"
+GOODPATH="${CURPATH/Dropbox (MIT)/Dropbox-MIT}"
+echo_yellow "cd ${GOODPATH}"
+cd "${GOODPATH}"

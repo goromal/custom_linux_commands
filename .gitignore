@@ -2,3 +2,6 @@
 *.log
 ditaa.jar
 .vscode/*
+abc_res/abc_tools/*
+getvideo_res/youtube-dl
+songsplit_res/pretrained_models/

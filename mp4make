@@ -1,0 +1,205 @@
+#!/bin/bash
+
+usage()
+{
+cat << EOF
+usage: mp4make [OPTIONS] input output_name
+
+Create an (appropriately-sized) .mp4 video from various sources and options, 
+using ffmpeg. Supported input file types are .mov, .mpeg, etc...
+DON'T include the .mp4 extension in output_name.
+
+input can be:
+
+  inputfile.ext: Will simply convert to .mp4 with specified options.
+  directory:     Will take all videos within the directory and combine by 
+                 lexicographical order into the output video.
+
+OPTIONS:
+
+  -q, --quality | Give a number (24-30), lower is higher quality.
+  -w, --width   | Desired width (in pixels) of output video.
+  -l, --label   | e.g., "My Label" 24 Add label (with fontsize) to bottom 
+                | left corner of video.
+  -s, --start   | INITIAL time: [HH:]MM:SS[.0]
+  -e, --end     | FINAL time: [HH:]MM:SS[.0]
+
+WARNINGS:
+
+  - It appears that the --label option overrides the --width option.
+
+EOF
+}
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RESDIR="$DIR/mp4make_res"
+CALCRESDIR="$DIR/calc_res"
+
+INPUT="-"
+QUALI="-"
+WIDTH="-"
+LABEL="-"
+LBLFT="24"
+TIME0="-"
+TIMEF="-"
+ONAME="-"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+  -h|--help)
+  usage
+  exit
+  ;;
+  -q|--quality)
+  shift
+  QUALI="$1"
+  shift
+  ;;
+  -w|--width)
+  shift
+  WIDTH="$1"
+  shift
+  ;;
+  -l|--label)
+  shift
+  LABEL="$1"
+  shift
+  LBLFT="$1"
+  shift
+  ;;
+  -s|--start)
+  shift
+  TIME0="$1"
+  shift
+  ;;
+  -e|--end)
+  shift
+  TIMEF="$1"
+  shift
+  ;;
+  *)    
+  POSITIONAL+=("$1") 
+  shift 
+  ;;
+esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+if [ -z $(which ffmpeg) ]; then
+  echo_red "ffmpeg not found! Install with 'sudo apt install ffmpeg'."
+  exit
+fi
+
+INPUT="${1}"
+ONAME="${2}"
+
+if [[ -f "${ONAME}.mp4" ]]; then
+    echo_yellow "Removing pre-existing ${ONAME}.mp4."
+    rm "${ONAME}.mp4"
+fi
+
+SUCCESS="FALSE"
+
+autoffmpeg() {
+  input="$1"
+  quali="$2"
+  width="$3"
+  label="$4"
+  lblft="$5"
+  time0="$6"
+  timef="$7"
+  oname="$8"
+
+  # ffmpeg args with no quotes
+  ffmpeg_nq_args=""
+  
+  if [[ "${quali}" != "-" ]]; then
+    ffmpeg_nq_args="${ffmpeg_nq_args} -vcodec libx264"
+    if [[ "${quali}" != "x264" ]]; then
+      ffmpeg_nq_args="${ffmpeg_nq_args} -crf ${quali}"
+    fi
+  fi
+
+  if [[ "${width}" != "-" ]]; then
+    ffmpeg_nq_args="${ffmpeg_nq_args} -vf scale=${width}:-1"
+  fi
+
+  if [[ "${time0}" != "-" ]]; then
+    t1=`"$CALCRESDIR/ffmpeg_tools.py" fix-time-format ${time0}`
+    ffmpeg_nq_args="${ffmpeg_nq_args} -ss ${t1}"
+  else
+    ffmpeg_nq_args="${ffmpeg_nq_args} -ss 00:00:00.0"
+  fi
+  if [[ "${timef}" != "-" ]]; then
+    if [[ "${time0}" != "-" ]]; then
+      dur=`"$CALCRESDIR/ffmpeg_tools.py" duration-from-endpoints ${time0} ${timef}`
+    else
+      dur=`"$CALCRESDIR/ffmpeg_tools.py" fix-time-format ${timef}`
+    fi
+    ffmpeg_nq_args="${ffmpeg_nq_args} -t $dur"
+  fi
+
+  # incorporate args with quotes
+
+  if [[ "${label}" != "-" ]]; then
+    success="COMMAND [ffmpeg -i \"${input}\" ${ffmpeg_nq_args} -vf drawtext=\"text='${label}': fontcolor=white: fontsize=${lblft}: box=1: boxcolor=black@0.75: boxborderw=10: x=10: y=h-text_h-10\" \"${oname}.mp4\"] FAILED."
+    ffmpeg -i "${input}" ${ffmpeg_nq_args} -vf drawtext="text='${label}': fontcolor=white: fontsize=${lblft}: box=1: boxcolor=black@0.75: boxborderw=10: x=10: y=h-text_h-10" "${oname}.mp4" > /dev/null 2>&1 && success="TRUE"
+  else
+    success="COMMAND [ffmpeg -i \"${input}\" ${ffmpeg_nq_args} \"${oname}.mp4\"] FAILED."
+    ffmpeg -i "${input}" ${ffmpeg_nq_args} "${oname}.mp4" > /dev/null 2>&1 && success="TRUE"
+  fi
+
+  echo "${success}"
+}
+
+checksuccess() {
+  status="$1"
+  successmsg="$2"
+  if [[ "$status" == "TRUE" ]]; then
+    if [ ! -z "$successmsg" ]; then
+      echo_green "$successmsg"
+    fi
+  else
+    echo_red "ERROR: ${status}"
+    exit
+  fi
+}
+
+if [[ -d "${INPUT}" ]]; then
+    echo_yellow "Parsing ${INPUT} as a directory of videos..."
+    # https://trac.ffmpeg.org/wiki/Concatenate
+    if [[ "${QUALI}" == "-" ]]; then
+      QUALI="x264"
+    fi
+    echo "# video concatenation list:" > "${RESDIR}/__cnct__.ct"
+    for i in `cd "${INPUT}" && ls | sort -V`; do
+      echo "Converting ${i} to codec x264..."
+      ibase="${i%.*}"
+      SUCCESS=$(autoffmpeg "${INPUT/$i}" ${QUALI} ${WIDTH} "${LABEL}" ${LBLFT} ${TIME0} ${TIMEF} "${ONAME}")
+      checksuccess "$SUCCESS" 
+      echo "file '${RESDIR}/__cnct__${ibase}.mp4'" >> "${RESDIR}/__cnct__.ct"
+    done
+    echo_yellow "Combining..."
+    # https://stackoverflow.com/questions/49398311/ffmpeg-directory-with-spaces-and
+    SUCCESS="COMMAND [ffmpeg -f concat -safe 0 -i \"${RESDIR}/__cnct__.ct\" -c copy \"${OUTPUT_NAME}.mp4\"] FAILED."
+    ffmpeg -f concat -safe 0 -i "${RESDIR}/__cnct__.ct" -c copy "${OUTPUT_NAME}.mp4" > /dev/null 2>&1 && SUCCESS="TRUE"
+    rm "${RESDIR}"/__cnct__*
+    checksuccess "$SUCCESS" "${ONAME}.mp4 SUCCESSFULLY CREATED"
+elif [[ -f "${INPUT}" ]]; then
+    echo_yellow "Parsing ${INPUT} as a standalone video..."
+    SUCCESS=$(autoffmpeg "${INPUT}" ${QUALI} ${WIDTH} "${LABEL}" ${LBLFT} ${TIME0} ${TIMEF} "${ONAME}")
+    checksuccess "$SUCCESS" "${ONAME}.mp4 SUCCESSFULLY CREATED"
+else
+    echo_red "Specified input (${INPUT}) is neither a file nor a directory."
+    exit
+fi

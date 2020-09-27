@@ -1,0 +1,164 @@
+#!/bin/bash
+
+INKSCAPE_EXE="/snap/bin/inkscape" # to get version 1.1 features: sudo snap install inkscape --edge
+
+usage()
+{
+cat << EOF
+usage: svgtool inputsvg [-n] action [outputsvg]
+       OR
+       svgtool -A [-n] [-s] action
+
+Perform a slew of occasionally useful operations on an SVG file or, with -A flag, on all
+SVG/PDF files in current directory. With -A flag, output filename is auto-generated.
+
+-n = Don't crop borders to content, which sometimes isn't useful.
+     To-date, only relevant for svg-to-pdf and svg-to-png.
+-s = Use the same filename for the output (multi-file version of leaving outputsvg blank).
+     Be careful--this will replace the original file if the extensions are the same!
+
+action list:
+
+  scour                | Use Jeff Schiller's and Louis Simard's Scour program to optimize file size.
+  clean-matlab         | Remove white background and crop-to-content. Only use on matlab-generated SVGs.
+  rmtext               | Remove all text elements from the SVG.
+  rmwhite              | + TODO + Remove ALL white elements from the SVG.
+  pdfconv-poppler PAGE | Convert PAGE of inputsvg (actually a PDF) to SVG using Poppler fonts.
+  pdfconv-plain        | Convert inputsvg (actually a PDF) to SVG using internal fonts.
+  svg-to-pdf           | Convert inputsvg to outputsvg (actually a PDF)
+  svg-to-png           | Convert inputsvg to outputsvg (actually a PNG) at 300 DPI.
+
+EOF
+}
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+RESDIR="$DIR/svgtool_res"
+PROCESSORSCRIPT="$RESDIR/svg_processor.py"
+
+ALLSVGS="FALSE"
+CROP="TRUE"
+SAMENAMES="FALSE"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -n)
+    CROP="FALSE"
+    shift
+    ;;
+    -s)
+    SAMENAMES="TRUE"
+    shift
+    ;;
+    -A)
+    ALLSVGS="TRUE"
+    shift
+    ;;
+    *)    # unknown option
+  POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+
+set -- "${POSITIONAL[@]}"
+
+# Processing function ==========================================================
+process_pdf()
+{
+PP_INFILE="$1"
+PP_ACTION="$2"
+PP_OUTFILE="$3"
+
+if [[ $PP_ACTION == "scour" ]]; then
+  # "maximum scrubbing," see https://github.com/scour-project/scour
+  echo_yellow "Scrubbing $PP_INFILE -> $PP_OUTFILE..."
+  scour -i "$PP_INFILE" -o "$PP_OUTFILE" --enable-viewboxing --enable-id-stripping --enable-comment-stripping --shorten-ids --indent=none > /dev/null 2>&1
+elif [[ $PP_ACTION == "rmtext" ]]; then
+  echo_yellow "Removing text $PP_INFILE -> $PP_OUTFILE..."
+  "$PROCESSORSCRIPT" "$PP_INFILE" "$PP_ACTION" "$PP_OUTFILE" > /dev/null 2>&1
+elif [[ $PP_ACTION == "pdfconv-poppler" ]]; then
+  echo_yellow "Converting $PP_INFILE -> $PP_OUTFILE using Poppler..."
+  PAGE="$3"
+  PP_OUTFILE="$4"
+  $INKSCAPE_EXE --pdf-poppler --pdf-page=$PAGE "$PP_INFILE" --export-area-drawing --export-dpi=300 --export-filename="$PP_OUTFILE" > /dev/null 2>&1
+elif [[ $PP_ACTION == "pdfconv-plain" ]]; then
+  echo_yellow "Converting $PP_INFILE -> $PP_OUTFILE..."
+  inkscape -z -f "$PP_INFILE" --export-plain-svg="$PP_OUTFILE" > /dev/null 2>&1
+elif [[ $PP_ACTION == "svg-to-pdf" ]]; then
+  echo_yellow "Converting $PP_INFILE -> $PP_OUTFILE..."
+  if [[ "$CROP" == "TRUE" ]]; then
+    inkscape --file="$PP_INFILE" --export-area-drawing --without-gui --export-pdf="$PP_OUTFILE" > /dev/null 2>&1
+  else
+    inkscape --file="$PP_INFILE" --without-gui --export-pdf="$PP_OUTFILE" > /dev/null 2>&1
+  fi
+elif [[ $PP_ACTION == "svg-to-png" ]]; then
+  echo_yellow "Converting $PP_INFILE -> $PP_OUTFILE..."
+  if [[ "$CROP" == "TRUE" ]]; then
+    inkscape --file="$PP_INFILE" --export-area-drawing --without-gui --export-dpi=300 --export-png="$PP_OUTFILE" > /dev/null 2>&1
+  else
+    inkscape --file="$PP_INFILE" --without-gui --export-dpi=300 --export-png="$PP_OUTFILE" > /dev/null 2>&1
+  fi
+elif [[ $PP_ACTION == "clean-matlab" ]]; then
+  echo_yellow "Removing matlab-generated superfluities $PP_INFILE -> $PP_OUTFILE..."
+  "$PROCESSORSCRIPT" "$PP_INFILE" "$PP_ACTION" "$PP_OUTFILE" > /dev/null 2>&1
+  inkscape --verb=FitCanvasToDrawing --verb=FileSave --verb=FileQuit "$PP_OUTFILE" > /dev/null 2>&1
+else
+  echo_red "ERROR: Unrecognized action command ($PP_ACTION)!"
+  exit
+fi
+}
+# ==============================================================================
+
+if [[ $ALLSVGS == "TRUE" ]]; then
+  ACTION="$1"
+  SEARCH_EXT=".svg"
+  EXTENSION=".svg"
+  [[ $ACTION == "svg-to-pdf" ]] && EXTENSION=".pdf"
+  [[ $ACTION == "pdfconv*" ]] && SEARCH_EXT=".pdf"
+  [[ $ACTION == "svg-to-png" ]] && EXTENSION=".png"
+
+  shopt -s nullglob
+  for i in *${SEARCH_EXT}; do
+    filepath=$(dirname -- "$i")
+    fullfilename=$(basename -- "$i")
+    filename="${fullfilename%.*}"
+    INFILE="$i"
+    if [[ "$SAMENAMES" == "TRUE" ]]; then
+      OUTFILE="$filepath/$filename$EXTENSION"
+    else
+      OUTFILE="$filepath/$filename-$ACTION$EXTENSION"
+    fi
+    process_pdf "$INFILE" "$ACTION" "$OUTFILE"
+  done
+else
+  INFILE="$1"
+  ACTION="$2"
+  OUT_EXTENSION=".svg"
+  [[ $ACTION == "svg-to-pdf" ]] && OUT_EXTENSION=".pdf"
+  [[ $ACTION == "pdfconv*" ]] && OUT_EXTENSION=".pdf"
+  [[ $ACTION == "svg-to-png" ]] && OUT_EXTENSION=".png"
+  OUTFILE="$3"
+  if [ -z "$OUTFILE" ]; then
+    filepath=$(dirname -- "$INFILE")
+    fullfilename=$(basename -- "$INFILE")
+    filename="${fullfilename%.*}"
+    OUTFILE="$filepath/$filename$OUT_EXTENSION"
+  fi
+  process_pdf "$INFILE" "$ACTION" "$OUTFILE"
+fi
+
+echo_green "Done."
